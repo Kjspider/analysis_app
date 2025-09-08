@@ -1,3 +1,6 @@
+# ----------------------------------------
+# 📊 ローソク足チャート描画（スマホ対応強化版）
+# ----------------------------------------
 import plotly.graph_objects as go
 import pandas as pd
 import streamlit as st
@@ -46,14 +49,14 @@ def plot_candlestick(df: pd.DataFrame, ticker: str, indicators: list, short_ma: 
             y=df["Close"].rolling(window=short_ma).mean(),
             mode="lines",
             name=f"短期MA({short_ma})",
-            line=dict(color="blue")
+            line=dict(color="blue", width=2)
         ))
         fig.add_trace(go.Scatter(
             x=df.index,
             y=df["Close"].rolling(window=long_ma).mean(),
             mode="lines",
             name=f"長期MA({long_ma})",
-            line=dict(color="orange")
+            line=dict(color="orange", width=2)
         ))
 
     # ----------------------------------------
@@ -68,14 +71,15 @@ def plot_candlestick(df: pd.DataFrame, ticker: str, indicators: list, short_ma: 
             x=df.index,
             y=upper,
             name="BB上限",
-            line=dict(color="green", dash="dot")
+            line=dict(color="green", dash="dot", width=1)
         ))
         fig.add_trace(go.Scatter(
             x=df.index,
             y=lower,
             name="BB下限",
-            line=dict(color="green", dash="dot")
+            line=dict(color="green", dash="dot", width=1)
         ))
+
     # ----------------------------------------
     # VWAPラインを追加（主軸に重ねて表示）
     # ----------------------------------------
@@ -85,12 +89,10 @@ def plot_candlestick(df: pd.DataFrame, ticker: str, indicators: list, short_ma: 
             y=df["VWAP"],
             mode="lines",
             name="VWAP",
-            line=dict(color="purple", dash="dot")
+            line=dict(color="purple", dash="dot", width=2)
         ))
 
-     # ----------------------------------------
     # 期間指定VWAP（例：VWAP_20日）を追加
-    # ----------------------------------------
     for col in df.columns:
         if col.startswith("VWAP_") and col.endswith("日") and "VWAP" in indicators:
             fig.add_trace(go.Scatter(
@@ -98,8 +100,9 @@ def plot_candlestick(df: pd.DataFrame, ticker: str, indicators: list, short_ma: 
                 y=df[col],
                 mode="lines",
                 name=col,
-                line=dict(color="purple", dash="dash")
+                line=dict(color="purple", dash="dash", width=1)
             ))
+
     # ----------------------------------------
     # 出来高バーを追加（第二軸に表示）
     # ----------------------------------------
@@ -110,26 +113,39 @@ def plot_candlestick(df: pd.DataFrame, ticker: str, indicators: list, short_ma: 
             name="出来高",
             marker_color="gray",
             opacity=0.3,
-            yaxis="y2"  # 第二軸に割り当て
+            yaxis="y2"
         ))
 
     # ----------------------------------------
-    # グラフのレイアウト設定（第二軸含む）
+    # グラフのレイアウト設定（スマホ対応強化）
     # ----------------------------------------
     fig.update_layout(
         title=f"{ticker} の株価チャート",
         xaxis_title="日付",
         yaxis_title="価格",
         xaxis_rangeslider_visible=False,
+        autosize=True,
+        height=400,
+        margin=dict(l=10, r=10, t=40, b=10),
         yaxis2=dict(
             title="出来高",
             overlaying="y",
             side="right",
             showgrid=False
+        ),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=10)
         )
     )
 
     # ----------------------------------------
-    # Streamlit上にチャートを表示
+    # Streamlit上にチャートを表示（安定化）
     # ----------------------------------------
-    st.plotly_chart(fig, use_container_width=True)
+    st.markdown(f"### 📊 {ticker} の株価チャート")
+    with st.container():
+        st.plotly_chart(fig, use_container_width=True)
